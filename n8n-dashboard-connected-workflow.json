@@ -560,7 +560,7 @@
         "operation": "update",
         "collection": "customers",
         "updateKey": "wa_id",
-        "fields": "={{ JSON.stringify({ wa_id: $('Set - Extract Message2').item.json.wa_id, profileName: $('Set - Extract Message2').item.json.user_name, lastMessage: $('Set - Extract Message2').item.json.message_text, lastMessageAt: $('Set - Extract Message2').item.json.message_timestamp, lastMessageType: $('Set - Extract Message2').item.json.message_type, updatedAt: $now.toISO() }) }}",
+        "fields": "wa_id,profileName,lastMessage,lastMessageAt,lastMessageType,updatedAt",
         "options": {
           "upsert": true
         }
@@ -579,7 +579,7 @@
         "operation": "update",
         "collection": "conversations",
         "updateKey": "message_id",
-        "fields": "={{ JSON.stringify({ message_id: $('Set - Extract Message2').item.json.message_id, wa_id: $('Set - Extract Message2').item.json.wa_id, customerName: $('Set - Extract Message2').item.json.user_name, direction: 'inbound', text: $('Set - Extract Message2').item.json.message_text, messageType: $('Set - Extract Message2').item.json.message_type, receivedAt: $('Set - Extract Message2').item.json.message_timestamp, createdAt: $now.toISO() }) }}",
+        "fields": "message_id,wa_id,customerName,direction,text,messageType,receivedAt,createdAt",
         "options": {
           "upsert": true
         }
@@ -591,6 +591,110 @@
       "position": [
         -9616,
         -2112
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "wa_id",
+              "value": "={{ $('Set - Extract Message2').item.json.wa_id }}",
+              "type": "string"
+            },
+            {
+              "name": "profileName",
+              "value": "={{ $('Set - Extract Message2').item.json.user_name }}",
+              "type": "string"
+            },
+            {
+              "name": "lastMessage",
+              "value": "={{ $('Set - Extract Message2').item.json.message_text }}",
+              "type": "string"
+            },
+            {
+              "name": "lastMessageAt",
+              "value": "={{ new Date(Number($('Set - Extract Message2').item.json.message_timestamp) * 1000).toISOString() }}",
+              "type": "string"
+            },
+            {
+              "name": "lastMessageType",
+              "value": "={{ $('Set - Extract Message2').item.json.message_type }}",
+              "type": "string"
+            },
+            {
+              "name": "updatedAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c5a2ce91-9bb7-4c7c-856f-75620627ed37",
+      "name": "Set - Dashboard Customer Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -9456,
+        -2192
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "message_id",
+              "value": "={{ $('Set - Extract Message2').item.json.message_id }}",
+              "type": "string"
+            },
+            {
+              "name": "wa_id",
+              "value": "={{ $('Set - Extract Message2').item.json.wa_id }}",
+              "type": "string"
+            },
+            {
+              "name": "customerName",
+              "value": "={{ $('Set - Extract Message2').item.json.user_name }}",
+              "type": "string"
+            },
+            {
+              "name": "direction",
+              "value": "inbound",
+              "type": "string"
+            },
+            {
+              "name": "text",
+              "value": "={{ $('Set - Extract Message2').item.json.message_text }}",
+              "type": "string"
+            },
+            {
+              "name": "messageType",
+              "value": "={{ $('Set - Extract Message2').item.json.message_type }}",
+              "type": "string"
+            },
+            {
+              "name": "receivedAt",
+              "value": "={{ new Date(Number($('Set - Extract Message2').item.json.message_timestamp) * 1000).toISOString() }}",
+              "type": "string"
+            },
+            {
+              "name": "createdAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a5d9e8dc-3b48-42b2-95bd-5a386986f45c",
+      "name": "Set - Dashboard Conversation Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -9088,
+        -2192
       ]
     }
   ],
@@ -610,7 +714,7 @@
       "main": [
         [
           {
-            "node": "MongoDB - Upsert Dashboard Customer",
+            "node": "Set - Dashboard Customer Fields",
             "type": "main",
             "index": 0
           }
@@ -810,7 +914,7 @@
       "main": [
         [
           {
-            "node": "MongoDB - Log Dashboard Conversation",
+            "node": "Set - Dashboard Conversation Fields",
             "type": "main",
             "index": 0
           }
@@ -822,6 +926,28 @@
         [
           {
             "node": "AI Agent - Intent Only2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Dashboard Customer Fields": {
+      "main": [
+        [
+          {
+            "node": "MongoDB - Upsert Dashboard Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Dashboard Conversation Fields": {
+      "main": [
+        [
+          {
+            "node": "MongoDB - Log Dashboard Conversation",
             "type": "main",
             "index": 0
           }
