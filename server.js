@@ -22,7 +22,7 @@ function adminOnly(req, res, next) {
     ? Buffer.from(encoded, 'base64').toString().split(':')
     : [];
   if (user === process.env.ADMIN_USERNAME && pass === process.env.ADMIN_PASSWORD) return next();
-  res.set('WWW-Authenticate', 'Basic realm="GlowCare admin"');
+  res.set('WWW-Authenticate', 'Basic realm="S5 Nutrition admin"');
   return res.status(401).send('Authentication required');
 }
 
@@ -34,15 +34,17 @@ app.get('/styles.css', (_req, res) => res.sendFile(stylesFile));
 app.get('/api/dashboard', async (_req, res, next) => {
   try {
     const activeSince = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const [customerCount, orderCount, cartCount, activeChatCount, recentMessages, recentCustomers] = await Promise.all([
+    const [customerCount, orderCount, cartCount, productCount, activeChatCount, recentMessages, recentCustomers, recentOrders] = await Promise.all([
       db.collection('customers').countDocuments(),
       db.collection('orders').countDocuments(),
       db.collection('cart').countDocuments(),
+      db.collection('product_info').countDocuments(),
       db.collection('customers').countDocuments({ $or: [{ lastMessageAt: { $gte: activeSince } }, { updatedAt: { $gte: activeSince } }] }),
       db.collection('conversations').find({}, { projection: { _id: 0 } }).sort({ receivedAt: -1, createdAt: -1 }).limit(20).toArray(),
       db.collection('customers').find({}, { projection: { _id: 0 } }).sort({ lastMessageAt: -1, updatedAt: -1 }).limit(50).toArray(),
+      db.collection('orders').find({}, { projection: { _id: 0 } }).sort({ createdAt: -1 }).limit(5).toArray(),
     ]);
-    res.json({ customerCount, orderCount, cartCount, activeChatCount, recentMessages, recentCustomers });
+    res.json({ customerCount, orderCount, cartCount, productCount, activeChatCount, recentMessages, recentCustomers, recentOrders });
   } catch (error) { next(error); }
 });
 
@@ -58,4 +60,4 @@ app.get('/api/chats/:waId', async (req, res, next) => {
 });
 
 app.use((error, _req, res, _next) => res.status(500).json({ error: 'Unable to load dashboard data.' }));
-app.listen(Number(process.env.PORT || 3000), () => console.log(`GlowCare dashboard: http://localhost:${process.env.PORT || 3000}`));
+app.listen(Number(process.env.PORT || 3000), () => console.log(`S5 Nutrition dashboard: http://localhost:${process.env.PORT || 3000}`));
