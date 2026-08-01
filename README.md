@@ -19,6 +19,10 @@ The `.env` file is deliberately not included in source control. Do not put Mongo
 
 ## n8n setup
 
+For a standalone dashboard feed, import `n8n-dashboard-connector.json` into n8n. Select the same MongoDB credential and database used by the dashboard on both MongoDB nodes, activate it, then send your WhatsApp provider's inbound event payload to its production webhook URL (`/webhook/dashboard-events`). It writes one current customer record to `customers` and deduplicated inbound messages to `conversations` using `message_id`.
+
+If you use the existing production WhatsApp catalog workflow instead, keep its equivalent `MongoDB - Upsert Customer` and `MongoDB - Log Incoming Message` nodes directly after message extraction; that workflow already implements the same connection.
+
 After `Set - Extract Message2`, add these MongoDB nodes before the intent-routing node, using the same MongoDB credential as the rest of the workflow:
 
 - `MongoDB - Upsert Customer`: update the `customers` collection using `wa_id` as the update key. Store `wa_id`, `profileName` from `user_name`, `lastMessage` from `message_text`, and `lastMessageAt`/`updatedAt` as the current ISO time.
