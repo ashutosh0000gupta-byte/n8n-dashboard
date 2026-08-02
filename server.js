@@ -59,5 +59,45 @@ app.get('/api/chats/:waId', async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
+// Server-Sent Events (SSE) for Real-Time Updates
+const clients = new Set();
+
+app.get('/api/stream', (req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+  });
+  
+  clients.add(res);
+  res.write('data: {"type": "connected"}\n\n');
+
+  req.on('close', () => {
+    clients.delete(res);
+  });
+});
+
+function broadcastUpdate(collection, operation) {
+  const data = JSON.stringify({ type: 'update', collection, operation });
+  for (const client of clients) {
+    client.write(`data: ${data}\n\n`);
+  }
+}
+
+try {
+  ['customers', 'conversations', 'orders', 'cart'].forEach(coll => {
+    const changeStream = db.collection(coll).watch();
+    changeStream.on('change', (change) => {
+      broadcastUpdate(coll, change.operationType);
+    });
+    changeStream.on('error', (err) => {
+      console.error(`Change stream error on ${coll}:`, err.message);
+    });
+  });
+  console.log('MongoDB Change Streams initialized.');
+} catch (error) {
+  console.error('Could not initialize Change Streams. Ensure MongoDB is a Replica Set:', error.message);
+}
+
 app.use((error, _req, res, _next) => res.status(500).json({ error: 'Unable to load dashboard data.' }));
 app.listen(Number(process.env.PORT || 3000), () => console.log(`S5 Nutrition dashboard: http://localhost:${process.env.PORT || 3000}`));
