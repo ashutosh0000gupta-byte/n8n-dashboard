@@ -1,0 +1,964 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "id": "e5a70c5a-4ab1-44f2-8c92-e26ea87fc3b8",
+      "name": "WhatsApp Trigger4",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -10016,
+        -2336
+      ],
+      "webhookId": "ae7eca56-0699-44cd-aa2d-aa27e6ead789"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "wa_id",
+              "value": "={{ $json.contacts[0].wa_id }}",
+              "type": "string"
+            },
+            {
+              "name": "message_text",
+              "value": "={{ $json.messages[0].text?.body || $json.messages[0].button?.text || $json.messages[0].interactive?.button_reply?.title || '' }}",
+              "type": "string"
+            },
+            {
+              "name": "user_name",
+              "value": "={{ $json.contacts[0].profile?.name || 'Customer' }}",
+              "type": "string"
+            },
+            {
+              "name": "message_id",
+              "value": "={{ $json.messages[0].id || '' }}",
+              "type": "string"
+            },
+            {
+              "name": "message_timestamp",
+              "value": "={{ $json.messages[0].timestamp || $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "name": "message_type",
+              "value": "={{ $json.messages[0].type || 'text' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7e9f9d8d-18ab-47cc-8922-9eee4544f260",
+      "name": "Set - Extract Message2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -9616,
+        -2352
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message_text }}",
+        "options": {
+          "systemMessage": "Classify the incoming WhatsApp message. Reply with exactly one lowercase token: greeting, search, buy, track, or help. greeting: greetings/menu/start. search: product/category/recommendation/know more queries. buy: buy, add to cart, checkout, quantity, address, payment. track: track/status/order. help: assistance or anything else. Do not search, recommend, extract products, write a reply, or format a message. Output only the token."
+        }
+      },
+      "id": "3960a20d-fe98-4ad9-81bf-045d3c973c5d",
+      "name": "AI Agent - Intent Only2",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -9424,
+        -2336
+      ]
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {
+          "temperature": 0
+        }
+      },
+      "id": "8f55e637-73e8-4690-b68b-63ea32204eea",
+      "name": "Groq Chat Model4",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -9520,
+        -1984
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.trim() }}",
+                    "rightValue": "greeting",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "32be1a45-af07-4e0e-84f8-04bf55721bf6"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Greeting"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.trim() }}",
+                    "rightValue": "search",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "97a4670c-4139-4eed-afc5-4e9c4f69ac8f"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Search"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.trim() }}",
+                    "rightValue": "buy",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "df569a81-e40d-44ad-b4e3-36ea58c7123d"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Buy"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.trim() }}",
+                    "rightValue": "track",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "835f5875-7cef-4a80-8c10-50630b6f6ab6"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Track"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.trim() }}",
+                    "rightValue": "help",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "ca7213ba-8000-41a2-8c01-3d7783586187"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Help"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "ccd82cdf-dfeb-46a3-9efb-ae7f8a14c6a2",
+      "name": "Switch - Intent2",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -9104,
+        -2336
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1241624849033284",
+        "recipientPhoneNumber": "={{ $('Set - Extract Message2').item.json.wa_id }}",
+        "textBody": "✨ Welcome to GlowCare, {{ $('Set - Extract Message2').item.json.user_name }}!\n\nSend a product or category to browse, for example: *sunscreen* or *face wash*.\n\nYou can also type *track ORDER-ID* or *help*.",
+        "additionalFields": {}
+      },
+      "id": "5c47afd6-2954-4552-9145-267c548779e8",
+      "name": "Send Greeting2",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        -8800,
+        -2576
+      ],
+      "webhookId": "fb06363d-860a-4d28-a3b0-5f625713c6af"
+    },
+    {
+      "parameters": {
+        "collection": "product_info",
+        "options": {},
+        "query": "={ \"$or\": [{ \"name\": { \"$regex\": \"{{ $('Set - Extract Message2').item.json.message_text }}\", \"$options\": \"i\" } }, { \"category\": { \"$regex\": \"{{ $('Set - Extract Message2').item.json.message_text }}\", \"$options\": \"i\" } }, { \"brand\": { \"$regex\": \"{{ $('Set - Extract Message2').item.json.message_text }}\", \"$options\": \"i\" } }] }"
+      },
+      "id": "1413cef4-5f59-418b-b2dd-5c13f851a643",
+      "name": "MongoDB Find - Products2",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1,
+      "position": [
+        -8800,
+        -2416
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.productId || '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "754c2a93-b8ba-45e6-b9f6-8485e2a02164",
+      "name": "IF - Products Found2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -8560,
+        -2416
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "ad542679-9dff-48dd-911c-bd85b34de10f",
+      "name": "Loop Over Items - Products2",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -8336,
+        -2480
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "image_url",
+              "value": "={{ $json.product_image_url }}",
+              "type": "string"
+            },
+            {
+              "name": "caption",
+              "value": "={{ '🛍️ *' + $json.name + '*\\n🏷️ *Brand:* ' + $json.brand + '\\n\\n' + ($json.description || 'Premium product.') + '\\n\\n💰 *Price:* ₹' + $json.price + '\\n📦 *Stock:* ' + $json.stock + '\\n🔖 *Product ID:* ' + $json.productId + '\\n\\nReply *buy ' + $json.productId + '* to add this item, or *know more ' + $json.productId + '* for details.' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4f0e0c96-dd5c-4b35-acb1-ce3ad05fe74f",
+      "name": "Set - Product Message2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -8128,
+        -2480
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "whatsAppApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"messaging_product\": \"whatsapp\", \"to\": \"{{ $('Set - Extract Message2').item.json.wa_id }}\", \"type\": \"image\", \"image\": { \"link\": \"{{ $json.image_url }}\" } }",
+        "options": {}
+      },
+      "id": "36773a07-834c-45b6-8ed0-35c10cf7eeb4",
+      "name": "HTTP Request - Send Product Image2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -7888,
+        -2480
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "whatsAppApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"messaging_product\": \"whatsapp\", \"to\": \"{{ $('Set - Extract Message2').item.json.wa_id }}\", \"type\": \"text\", \"text\": { \"preview_url\": false, \"body\": \"{{ $('Set - Product Message2').item.json.caption }}\" } }",
+        "options": {}
+      },
+      "id": "4cb1160a-747f-4109-9f74-1cebdf54c440",
+      "name": "HTTP Request - Send Product Details2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -7648,
+        -2480
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1241624849033284",
+        "recipientPhoneNumber": "={{ $('Set - Extract Message2').item.json.wa_id }}",
+        "textBody": "Sorry, I couldn't find matching products. Try *sunscreen*, *face wash*, *moisturizer*, or *lipstick*.",
+        "additionalFields": {}
+      },
+      "id": "50eeb7e2-4f07-477c-a3a9-a3f37ae7589f",
+      "name": "Send No Products2",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        -8288,
+        -2224
+      ],
+      "webhookId": "52edad28-0b89-4134-b16c-fbac5c7f8266"
+    },
+    {
+      "parameters": {
+        "collection": "product_info",
+        "options": {},
+        "query": "={ \"productId\": \"{{ $('Set - Extract Message2').item.json.message_text.replace(/^(buy|know more)\\s+/i, '').trim().toUpperCase() }}\" }"
+      },
+      "id": "1e47f3e8-3dce-4cbc-a26c-e27b5007928d",
+      "name": "MongoDB Find - Selected Product2",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1,
+      "position": [
+        -8800,
+        -2160
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "collection": "cart",
+        "updateKey": "wa_id",
+        "fields": "={ \"wa_id\": \"{{ $('Set - Extract Message2').item.json.wa_id }}\", \"productId\": \"{{ $json.productId }}\", \"productName\": \"{{ $json.name }}\", \"price\": {{ $json.price }}, \"qty\": 1, \"updatedAt\": \"{{ $now.toISO() }}\" }",
+        "options": {}
+      },
+      "id": "f2745725-428b-4b6c-b37d-de91226e6e81",
+      "name": "MongoDB - Save Cart2",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1,
+      "position": [
+        -8544,
+        -2160
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1241624849033284",
+        "recipientPhoneNumber": "={{ $('Set - Extract Message2').item.json.wa_id }}",
+        "textBody": "Added to your cart. Please reply with your delivery address to continue to payment.",
+        "additionalFields": {}
+      },
+      "id": "6d63bbcc-6b08-4d87-9ba1-1dc34647a1a6",
+      "name": "Ask Address2",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        -8288,
+        -2048
+      ],
+      "webhookId": "3dfab17a-3223-43b9-8173-4ecca6b50361"
+    },
+    {
+      "parameters": {
+        "collection": "orders",
+        "options": {
+          "limit": 1,
+          "sort": "={ \"createdAt\": -1 }"
+        },
+        "query": "={ \"wa_id\": \"{{ $('Set - Extract Message2').item.json.wa_id }}\" }"
+      },
+      "id": "1458be5d-7175-4946-a928-a2b89d4cd011",
+      "name": "MongoDB Find - Order2",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1,
+      "position": [
+        -8800,
+        -1952
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1241624849033284",
+        "recipientPhoneNumber": "={{ $('Set - Extract Message2').item.json.wa_id }}",
+        "textBody": "📦 Order *{{ $json.orderId }}* is currently *{{ $json.status }}*. Estimated delivery: {{ $json.estimatedDelivery || '3–5 business days' }}.",
+        "additionalFields": {}
+      },
+      "id": "5b3dffb0-45d5-4e90-9831-4f34d170bc6c",
+      "name": "Send Order Status2",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        -8560,
+        -1952
+      ],
+      "webhookId": "0f9e4be0-a5e4-4a86-807c-fe66c1ee7ffb"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1241624849033284",
+        "recipientPhoneNumber": "={{ $('Set - Extract Message2').item.json.wa_id }}",
+        "textBody": "I can help you browse products, buy an item, or track an order. Send a product/category, or reply *menu*.",
+        "additionalFields": {}
+      },
+      "id": "8de8b15b-b682-4e51-a969-f79c96ef5200",
+      "name": "Send Help2",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        -8752,
+        -1728
+      ],
+      "webhookId": "e4a039a1-71b5-417f-abd0-0eb55a2105d6"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.wa_id }}",
+        "databaseName": "product"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryMongoDbChat",
+      "typeVersion": 1.1,
+      "position": [
+        -9360,
+        -2096
+      ],
+      "id": "de6f78ca-8558-44cb-94d5-f97de94ef655",
+      "name": "MongoDB Chat Memory4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d9b2122d-6805-4fdd-8c8b-032c8b6ecfe2",
+              "leftValue": "={{ $json.messages?.[0]?.id || '' }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -9824,
+        -2336
+      ],
+      "id": "555b3c71-259d-4509-a276-755dd6b16d4f",
+      "name": "If3",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "collection": "customers",
+        "updateKey": "wa_id",
+        "fields": "wa_id,profileName,lastMessage,lastMessageAt,lastMessageType,updatedAt",
+        "options": {
+          "upsert": true
+        }
+      },
+      "id": "071e945d-1143-4ba3-8d55-52d9ee91c3d2",
+      "name": "MongoDB - Upsert Dashboard Customer",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1,
+      "position": [
+        -9616,
+        -2192
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "collection": "conversations",
+        "updateKey": "message_id",
+        "fields": "message_id,wa_id,customerName,direction,text,messageType,receivedAt,createdAt",
+        "options": {
+          "upsert": true
+        }
+      },
+      "id": "0b488ea7-4ae8-448a-92e9-38d926a2d20f",
+      "name": "MongoDB - Log Dashboard Conversation",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1,
+      "position": [
+        -9616,
+        -2112
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "wa_id",
+              "value": "={{ $('Set - Extract Message2').item.json.wa_id }}",
+              "type": "string"
+            },
+            {
+              "name": "profileName",
+              "value": "={{ $('Set - Extract Message2').item.json.user_name }}",
+              "type": "string"
+            },
+            {
+              "name": "lastMessage",
+              "value": "={{ $('Set - Extract Message2').item.json.message_text }}",
+              "type": "string"
+            },
+            {
+              "name": "lastMessageAt",
+              "value": "={{ new Date(Number($('Set - Extract Message2').item.json.message_timestamp) * 1000).toISOString() }}",
+              "type": "string"
+            },
+            {
+              "name": "lastMessageType",
+              "value": "={{ $('Set - Extract Message2').item.json.message_type }}",
+              "type": "string"
+            },
+            {
+              "name": "updatedAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c5a2ce91-9bb7-4c7c-856f-75620627ed37",
+      "name": "Set - Dashboard Customer Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -9456,
+        -2192
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "message_id",
+              "value": "={{ $('Set - Extract Message2').item.json.message_id }}",
+              "type": "string"
+            },
+            {
+              "name": "wa_id",
+              "value": "={{ $('Set - Extract Message2').item.json.wa_id }}",
+              "type": "string"
+            },
+            {
+              "name": "customerName",
+              "value": "={{ $('Set - Extract Message2').item.json.user_name }}",
+              "type": "string"
+            },
+            {
+              "name": "direction",
+              "value": "inbound",
+              "type": "string"
+            },
+            {
+              "name": "text",
+              "value": "={{ $('Set - Extract Message2').item.json.message_text }}",
+              "type": "string"
+            },
+            {
+              "name": "messageType",
+              "value": "={{ $('Set - Extract Message2').item.json.message_type }}",
+              "type": "string"
+            },
+            {
+              "name": "receivedAt",
+              "value": "={{ new Date(Number($('Set - Extract Message2').item.json.message_timestamp) * 1000).toISOString() }}",
+              "type": "string"
+            },
+            {
+              "name": "createdAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a5d9e8dc-3b48-42b2-95bd-5a386986f45c",
+      "name": "Set - Dashboard Conversation Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -9088,
+        -2192
+      ]
+    }
+  ],
+  "connections": {
+    "WhatsApp Trigger4": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Extract Message2": {
+      "main": [
+        [
+          {
+            "node": "Set - Dashboard Customer Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Intent Only2": {
+      "main": [
+        [
+          {
+            "node": "Switch - Intent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Intent Only2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch - Intent2": {
+      "main": [
+        [
+          {
+            "node": "Send Greeting2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "MongoDB Find - Products2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "MongoDB Find - Selected Product2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "MongoDB Find - Order2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Help2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB Find - Products2": {
+      "main": [
+        [
+          {
+            "node": "IF - Products Found2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Products Found2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items - Products2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send No Products2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items - Products2": {
+      "main": [
+        [
+          {
+            "node": "Set - Product Message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Product Message2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Send Product Image2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Send Product Image2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Send Product Details2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Send Product Details2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items - Products2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB Find - Selected Product2": {
+      "main": [
+        [
+          {
+            "node": "MongoDB - Save Cart2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB - Save Cart2": {
+      "main": [
+        [
+          {
+            "node": "Ask Address2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB Find - Order2": {
+      "main": [
+        [
+          {
+            "node": "Send Order Status2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB Chat Memory4": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent - Intent Only2",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Set - Extract Message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB - Upsert Dashboard Customer": {
+      "main": [
+        [
+          {
+            "node": "Set - Dashboard Conversation Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB - Log Dashboard Conversation": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Intent Only2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Dashboard Customer Fields": {
+      "main": [
+        [
+          {
+            "node": "MongoDB - Upsert Dashboard Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Dashboard Conversation Fields": {
+      "main": [
+        [
+          {
+            "node": "MongoDB - Log Dashboard Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "active": false,
+  "name": "GlowCare WhatsApp + Dashboard"
+}

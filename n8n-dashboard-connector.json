@@ -1,0 +1,80 @@
+{
+  "name": "Dashboard Connector - WhatsApp to MongoDB",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dashboard-events",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c1dce23d-ae9c-4b2c-ae19-5f680d8fad01",
+      "name": "Webhook - WhatsApp Events",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-600, 180],
+      "webhookId": "d63ababb-1b0f-43a0-99d9-4b67f4238814"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body ?? $json;\nconst value = body.entry?.[0]?.changes?.[0]?.value ?? body;\nconst message = value.messages?.[0] ?? body.message;\nconst contact = value.contacts?.[0] ?? body.contact ?? {};\n\n// Ignore delivery/status callbacks: the dashboard lists inbound customer messages only.\nif (!message) return [];\n\nconst text = message.text?.body\n  ?? message.button?.text\n  ?? message.interactive?.button_reply?.title\n  ?? message.interactive?.list_reply?.title\n  ?? body.text\n  ?? '';\n\nreturn [{\n  json: {\n    wa_id: contact.wa_id ?? message.from ?? body.wa_id,\n    profileName: contact.profile?.name ?? body.profileName ?? 'Customer',\n    message_id: message.id ?? body.message_id ?? `${message.from}-${message.timestamp}`,\n    text,\n    messageType: message.type ?? body.messageType ?? 'text',\n    receivedAt: message.timestamp\n      ? new Date(Number(message.timestamp) * 1000).toISOString()\n      : (body.receivedAt ?? new Date().toISOString()),\n  },\n}];"
+      },
+      "id": "73f281fd-6f23-4fe2-ab4d-c83d8b1f5ae0",
+      "name": "Code - Normalize Incoming Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-360, 180]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "collection": "customers",
+        "updateKey": "wa_id",
+        "fields": "={{ JSON.stringify({ wa_id: $json.wa_id, profileName: $json.profileName, lastMessage: $json.text, lastMessageAt: $json.receivedAt, lastMessageType: $json.messageType, updatedAt: $now.toISO() }) }}",
+        "options": { "upsert": true }
+      },
+      "id": "e94de8be-b0c6-45f7-a7d3-e72dee1a9113",
+      "name": "MongoDB - Upsert Customer",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1,
+      "position": [-100, 180]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "collection": "conversations",
+        "updateKey": "message_id",
+        "fields": "={{ JSON.stringify({ message_id: $(\"Code - Normalize Incoming Message\").item.json.message_id, wa_id: $(\"Code - Normalize Incoming Message\").item.json.wa_id, customerName: $(\"Code - Normalize Incoming Message\").item.json.profileName, direction: 'inbound', text: $(\"Code - Normalize Incoming Message\").item.json.text, messageType: $(\"Code - Normalize Incoming Message\").item.json.messageType, receivedAt: $(\"Code - Normalize Incoming Message\").item.json.receivedAt, createdAt: $now.toISO() }) }}",
+        "options": { "upsert": true }
+      },
+      "id": "8773b34d-dba1-4b3c-8fe3-4db23d758548",
+      "name": "MongoDB - Log Conversation",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1,
+      "position": [160, 180]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"received\": true}",
+        "options": {}
+      },
+      "id": "88f6b7ec-3746-42ac-b7a3-b0e9e9865f8e",
+      "name": "Respond - Accepted",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [420, 180]
+    }
+  ],
+  "connections": {
+    "Webhook - WhatsApp Events": { "main": [[{ "node": "Code - Normalize Incoming Message", "type": "main", "index": 0 }]] },
+    "Code - Normalize Incoming Message": { "main": [[{ "node": "MongoDB - Upsert Customer", "type": "main", "index": 0 }]] },
+    "MongoDB - Upsert Customer": { "main": [[{ "node": "MongoDB - Log Conversation", "type": "main", "index": 0 }]] },
+    "MongoDB - Log Conversation": { "main": [[{ "node": "Respond - Accepted", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false,
+  "versionId": "bce7d2c9-d86d-4b5e-a3fd-9dfe3ba2bbf9",
+  "meta": { "templateCredsSetupCompleted": false },
+  "tags": []
+}
